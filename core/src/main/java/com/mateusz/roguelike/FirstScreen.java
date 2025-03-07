@@ -6,16 +6,19 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.math.Vector2;
 
 public class FirstScreen implements Screen, InputProcessor {
     private ShapeRenderer shapeRenderer;
     private Player player;
+    private VirtualJoystick joistick;
 
     @Override
     public void show(){
         shapeRenderer = new ShapeRenderer();
         // ustawianie pozycji poczatkowej i rozmiaru postaci
-        player = new Player(100, 100, 50, 50);
+        player = new Player(100, 50, 50, 50);
+        joistick = new VirtualJoystick(100,100,75,40);
         Gdx.input.setInputProcessor(this);
     }
     @Override
@@ -25,7 +28,14 @@ public class FirstScreen implements Screen, InputProcessor {
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         player.draw(shapeRenderer);
+        joistick.draw(shapeRenderer);
         shapeRenderer.end();
+
+        if(joistick.isTouched()){
+            Vector2 direction = joistick.getDirection();
+            float speed = 5;
+            player.setPosition(player.getBounds().x + direction.x * speed, player.getBounds().y + direction.y * speed);
+        }
     }
     @Override
     public boolean keyDown(int keycode){
@@ -57,11 +67,14 @@ public class FirstScreen implements Screen, InputProcessor {
     }
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button){
-        return false;
+        joistick.setTouched(true);
+        joistick.update(screenX,Gdx.graphics.getHeight() - screenY);
+        return true;
     }
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button){
-        return false;
+        joistick.setTouched(false);
+        return true;
     }
 
     @Override
@@ -71,7 +84,10 @@ public class FirstScreen implements Screen, InputProcessor {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer){
-        return false;
+        if(joistick.isTouched()){
+            joistick.update(screenX, Gdx.graphics.getHeight() - screenY);
+        }
+        return true;
     }
     @Override
     public boolean mouseMoved(int screenX, int screenY){
@@ -84,7 +100,11 @@ public class FirstScreen implements Screen, InputProcessor {
 
 
     @Override
-    public void resize(int width, int height){}
+    public void resize(int width, int height){
+        float playerX = 50;
+        float playerY = (height / 2) - (player.getBounds().height / 2);
+        player.setPosition(playerX, playerY);
+    }
     @Override
     public void pause(){}
     @Override
