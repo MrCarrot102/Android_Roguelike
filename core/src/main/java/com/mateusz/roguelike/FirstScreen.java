@@ -11,14 +11,17 @@ import com.badlogic.gdx.math.Vector2;
 public class FirstScreen implements Screen, InputProcessor {
     private ShapeRenderer shapeRenderer;
     private Player player;
-    private VirtualJoystick joistick;
+    private VirtualJoystick joystick;
+    private Room room;
 
     @Override
     public void show(){
         shapeRenderer = new ShapeRenderer();
         // ustawianie pozycji poczatkowej i rozmiaru postaci
         player = new Player(100, 50, 50, 50);
-        joistick = new VirtualJoystick(100,100,75,40);
+        joystick = new VirtualJoystick(100,100,75,40);
+        room = new Room();
+
         Gdx.input.setInputProcessor(this);
     }
     @Override
@@ -27,36 +30,45 @@ public class FirstScreen implements Screen, InputProcessor {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        room.draw(shapeRenderer);
         player.draw(shapeRenderer);
-        joistick.draw(shapeRenderer);
+        joystick.draw(shapeRenderer);
         shapeRenderer.end();
 
-        if(joistick.isTouched()){
-            Vector2 direction = joistick.getDirection();
+        if(joystick.isTouched()){
+            Vector2 direction = joystick.getDirection();
             float speed = 5;
-            player.setPosition(player.getBounds().x + direction.x * speed, player.getBounds().y + direction.y * speed);
+            float newX = player.getBounds().x + direction.x * speed;
+            float newY = player.getBounds().y + direction.y * speed;
+            player.setPosition(newX, newY, room);
         }
     }
+
     @Override
-    public boolean keyDown(int keycode){
-        // predkosc poruszania sie postaci
-        float speed = 5;
-        switch (keycode) {
-            case Keys.LEFT:
-                player.setPosition(player.getBounds().x - speed, player.getBounds().y);
-                break;
-            case Keys.RIGHT:
-                player.setPosition(player.getBounds().x + speed, player.getBounds().y);
-                break;
-            case Keys.UP:
-                player.setPosition(player.getBounds().x, player.getBounds().y + speed);
-                break;
-            case Keys.DOWN:
-                player.setPosition(player.getBounds().x, player.getBounds().y - speed);
-                break;
-        }
-        return true;
+    public boolean keyDown(int keycode) {
+        return false;
     }
+
+    /*@Override
+        public boolean keyDown(int keycode){
+            // predkosc poruszania sie postaci
+            float speed = 5;
+            switch (keycode) {
+                case Keys.LEFT:
+                    player.setPosition(player.getBounds().x - speed, player.getBounds().y);
+                    break;
+                case Keys.RIGHT:
+                    player.setPosition(player.getBounds().x + speed, player.getBounds().y);
+                    break;
+                case Keys.UP:
+                    player.setPosition(player.getBounds().x, player.getBounds().y + speed);
+                    break;
+                case Keys.DOWN:
+                    player.setPosition(player.getBounds().x, player.getBounds().y - speed);
+                    break;
+            }
+            return true;
+        }*/
     @Override
     public boolean keyUp(int keycode){
         return false;
@@ -67,13 +79,13 @@ public class FirstScreen implements Screen, InputProcessor {
     }
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button){
-        joistick.setTouched(true);
-        joistick.update(screenX,Gdx.graphics.getHeight() - screenY);
+        joystick.setTouched(true);
+        joystick.update(screenX,Gdx.graphics.getHeight() - screenY);
         return true;
     }
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button){
-        joistick.setTouched(false);
+        joystick.setTouched(false);
         return true;
     }
 
@@ -84,8 +96,8 @@ public class FirstScreen implements Screen, InputProcessor {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer){
-        if(joistick.isTouched()){
-            joistick.update(screenX, Gdx.graphics.getHeight() - screenY);
+        if(joystick.isTouched()){
+            joystick.update(screenX, Gdx.graphics.getHeight() - screenY);
         }
         return true;
     }
@@ -102,8 +114,8 @@ public class FirstScreen implements Screen, InputProcessor {
     @Override
     public void resize(int width, int height){
         float playerX = 50;
-        float playerY = (height / 2) - (player.getBounds().height / 2);
-        player.setPosition(playerX, playerY);
+        float playerY = ((float) height / 2) - (player.getBounds().height / 2);
+        player.setPosition(playerX, playerY, room);
     }
     @Override
     public void pause(){}

@@ -22,7 +22,11 @@ public class Player {
     public Rectangle getBounds(){
         return bounds;
     }
-    public void setPosition(float x, float y){
-        bounds.setPosition(x, y);
+
+    public void setPosition(float x, float y, Room room){
+        Rectangle newBounds = new Rectangle(x, y, bounds.width, bounds.height);
+        if (!room.collidesWith(newBounds)){
+            bounds.setPosition(x, y);
+        }
     }
 }
