@@ -12,15 +12,19 @@ public class FirstScreen implements Screen, InputProcessor {
     private ShapeRenderer shapeRenderer;
     private Player player;
     private VirtualJoystick joystick;
-    private Room room;
+    private RoomManager roomManager;
 
     @Override
     public void show(){
         shapeRenderer = new ShapeRenderer();
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+
+
         // ustawianie pozycji poczatkowej i rozmiaru postaci
-        player = new Player(100, 50, 50, 50);
+        player = new Player(screenWidth / 2 - 25, screenHeight / 2 - 25, 50, 50);
         joystick = new VirtualJoystick(100,100,75,40);
-        room = new Room();
+        roomManager = new RoomManager(screenWidth, screenHeight);
 
         Gdx.input.setInputProcessor(this);
     }
@@ -29,8 +33,10 @@ public class FirstScreen implements Screen, InputProcessor {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        Room currentRoom = roomManager.getCurrentRoom();
+
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        room.draw(shapeRenderer);
+        currentRoom.draw(shapeRenderer);
         player.draw(shapeRenderer);
         joystick.draw(shapeRenderer);
         shapeRenderer.end();
@@ -40,7 +46,12 @@ public class FirstScreen implements Screen, InputProcessor {
             float speed = 5;
             float newX = player.getBounds().x + direction.x * speed;
             float newY = player.getBounds().y + direction.y * speed;
-            player.setPosition(newX, newY, room);
+            player.setPosition(newX, newY, currentRoom);
+        }
+
+        if (player.isAtExit(currentRoom)){
+            roomManager.changeRoom(0);
+            player.setPosition(Gdx.graphics.getWidth() / 2 - 25, Gdx.graphics.getHeight() / 2 - 25, roomManager.getCurrentRoom());
         }
     }
 
@@ -113,9 +124,6 @@ public class FirstScreen implements Screen, InputProcessor {
 
     @Override
     public void resize(int width, int height){
-        float playerX = 50;
-        float playerY = ((float) height / 2) - (player.getBounds().height / 2);
-        player.setPosition(playerX, playerY, room);
     }
     @Override
     public void pause(){}

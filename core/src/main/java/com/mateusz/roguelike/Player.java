@@ -29,4 +29,13 @@ public class Player {
             bounds.setPosition(x, y);
         }
     }
+
+    public boolean isAtExit(Room room){
+        for (Rectangle exit : room.getExits()){
+            if(bounds.overlaps(exit)){
+                return true;
+            }
+        }
+        return false;
+    }
 }
