@@ -13,6 +13,7 @@ public class FirstScreen implements Screen, InputProcessor {
     private Player player;
     private VirtualJoystick joystick;
     private RoomManager roomManager;
+    private FOVRenderer fovRenderer;
 
     @Override
     public void show(){
@@ -25,7 +26,7 @@ public class FirstScreen implements Screen, InputProcessor {
         player = new Player(screenWidth / 2 - 25, screenHeight / 2 - 25, 50, 50);
         joystick = new VirtualJoystick(100,100,75,40);
         roomManager = new RoomManager(screenWidth, screenHeight);
-
+        fovRenderer = new FOVRenderer(60, 300);
         Gdx.input.setInputProcessor(this);
     }
     @Override
@@ -41,12 +42,18 @@ public class FirstScreen implements Screen, InputProcessor {
         joystick.draw(shapeRenderer);
         shapeRenderer.end();
 
+        // pole widzenia
+        fovRenderer.render(player.getPosition(), player.getRotation(), currentRoom);
+
         if(joystick.isTouched()){
             Vector2 direction = joystick.getDirection();
             float speed = 5;
             float newX = player.getBounds().x + direction.x * speed;
             float newY = player.getBounds().y + direction.y * speed;
             player.setPosition(newX, newY, currentRoom);
+
+            // obracanie postaci w kierunku ruchu
+            player.setRotation(direction.angleDeg());
         }
 
         if (player.isAtExit(currentRoom)){
@@ -84,16 +91,19 @@ public class FirstScreen implements Screen, InputProcessor {
     public boolean keyUp(int keycode){
         return false;
     }
+
     @Override
     public boolean keyTyped(char character){
         return false;
     }
+
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button){
         joystick.setTouched(true);
         joystick.update(screenX,Gdx.graphics.getHeight() - screenY);
         return true;
     }
+
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button){
         joystick.setTouched(false);
@@ -112,31 +122,34 @@ public class FirstScreen implements Screen, InputProcessor {
         }
         return true;
     }
+
     @Override
     public boolean mouseMoved(int screenX, int screenY){
         return false;
     }
+
     @Override
     public boolean scrolled(float amountX, float amountY){
         return false;
     }
 
-
     @Override
     public void resize(int width, int height){
     }
+
     @Override
     public void pause(){}
+
     @Override
     public void resume(){}
+
     @Override
     public void hide(){}
+
     @Override
     public void dispose(){
         shapeRenderer.dispose();
+        fovRenderer.dispose();
     }
-
-
-
 
 }
