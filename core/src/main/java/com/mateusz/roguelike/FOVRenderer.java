@@ -9,7 +9,7 @@ public class FOVRenderer{
     private float fovAngle;
     private float viewDistance;
 
-    public FOVRenderer(float fovAngle, float viewDistance){
+    public FOVRenderer(ShapeRenderer shapeRenderer, float fovAngle, float viewDistance){
         this.shapeRenderer = new ShapeRenderer();
         this.fovAngle = fovAngle;
         this.viewDistance =  viewDistance;

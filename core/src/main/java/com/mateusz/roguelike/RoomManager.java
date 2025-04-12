@@ -1,5 +1,7 @@
 package com.mateusz.roguelike;
 
+import com.badlogic.gdx.Gdx;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,11 +14,17 @@ public class RoomManager {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
         rooms = new ArrayList<>();
-        rooms.add(new Room(screenWidth, screenHeight));
-        rooms.add(new Room(screenWidth, screenHeight));
-        rooms.add(new Room(screenWidth, screenHeight));
-
+        for(int i = 0; i < 10; i++){
+            rooms.add(new Room(screenWidth, screenHeight));
+        }
         currentRoomIndex = 0;
+    }
+
+    public void goToNextRoom(){
+        currentRoomIndex = (currentRoomIndex + 1) % rooms.size();
+        if(currentRoomIndex == 0){
+            rooms.add(new Room(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
+        }
     }
 
     public Room getCurrentRoom(){
