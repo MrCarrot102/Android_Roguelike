@@ -16,11 +16,14 @@ public class FirstScreen implements Screen, InputProcessor {
     private RoomManager roomManager;
     private FOVRenderer fovRenderer;
     private float screenWidth, screenHeight;
+    private String lastExitType;
 
     // Zmienne do przejść między pokojami
     private boolean isChangingRoom = false;
     private float roomChangeTimer = 0;
-    private final float ROOM_CHANGE_TIME = 0.5f; // Czas trwania animacji przejścia
+    private final float ROOM_CHANGE_TIME = 0.5f;
+
+    
 
     @Override
     public void show() {
@@ -31,14 +34,13 @@ public class FirstScreen implements Screen, InputProcessor {
         player = new Player(screenWidth/2, screenHeight/2, 30, 30);
         joystick = new VirtualJoystick(150, 150, 80, 45);
         roomManager = new RoomManager(screenWidth, screenHeight);
-        fovRenderer = new FOVRenderer(shapeRenderer, 90, 300); // 90 stopni FOV, zasięg 300px
+        fovRenderer = new FOVRenderer(shapeRenderer, 90, 300);
 
         Gdx.input.setInputProcessor(this);
     }
 
     @Override
     public void render(float delta) {
-        // Czyszczenie ekranu
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -55,15 +57,20 @@ public class FirstScreen implements Screen, InputProcessor {
         // Rysowanie
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        // 1. Najpierw rysujemy ściany pokoju
+        // 1. Rysowanie pokoju (ścian i wyjść)
         currentRoom.draw(shapeRenderer);
 
-        // 2. Potem gracza
-        player.draw(shapeRenderer);
+        // 2. Rysowanie wyjść na wierzchu
+        shapeRenderer.setColor(0, 1, 0, 1); // Zielone wyjścia
+        for(Rectangle exit : currentRoom.getExits()) {
+            shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
+        }
 
+        // 3. Rysowanie gracza
+        player.draw(shapeRenderer);
         shapeRenderer.end();
 
-        // 3. Na końcu FOV (oddzielny begin/end dla przezroczystości)
+        // 4. Rysowanie FOV
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         //fovRenderer.render(player.getPosition(), player.getRotation());
         shapeRenderer.end();
@@ -73,25 +80,48 @@ public class FirstScreen implements Screen, InputProcessor {
     }
 
     private void handleMovement(float delta, Room currentRoom) {
-        if (joystick.isTouched()) {
+        if(joystick.isTouched()){
             Vector2 direction = joystick.getDirection();
-            float speed = 150 * delta; // Prędkość zależna od czasu
+            float speed = 150 * delta;
 
             float newX = player.getBounds().x + direction.x * speed;
             float newY = player.getBounds().y + direction.y * speed;
 
-            player.setPosition(newX, newY, currentRoom);
+            Rectangle tempBounds = new Rectangle(newX, newY,
+                player.getBounds().width, player.getBounds().height);
+
+            if(!currentRoom.collidesWithWalls(tempBounds)){
+                player.setPosition(newX, newY);
+            }
+
             player.setRotation(direction.angleDeg());
         }
     }
 
     private void checkRoomExits(Room currentRoom) {
-        for (Rectangle exit : currentRoom.getExits()) {
-            if (player.getBounds().overlaps(exit)) {
-                startRoomTransition();
-                break;
+        Rectangle playerBounds = player.getBounds();
+
+        for (Rectangle exit : currentRoom.getExits()){
+            if (exit.overlaps(playerBounds)){
+                String exitType = getExitType(exit, currentRoom);
+                handleRoomTransition(exitType);
+                return;
             }
         }
+    }
+
+    private String getExitType(Rectangle exit, Room room){
+        if (exit.y == 0) return "bottom";
+        if (exit.y == room.getHeight() - exit.height) return "top";
+        if (exit.x == 0) return "left";
+        return "right";
+    }
+
+    private void handleRoomTransition(String exitType){
+        isChangingRoom = true;
+        roomChangeTimer = 0;
+
+        this.lastExitType = exitType;
     }
 
     private void startRoomTransition() {
@@ -101,8 +131,6 @@ public class FirstScreen implements Screen, InputProcessor {
 
     private void renderRoomTransition(float delta) {
         roomChangeTimer += delta;
-
-        // Efekt zaciemnienia
         float alpha = Math.min(roomChangeTimer / ROOM_CHANGE_TIME, 1);
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -116,13 +144,25 @@ public class FirstScreen implements Screen, InputProcessor {
     }
 
     private void completeRoomTransition() {
-        roomManager.goToNextRoom();
+     roomManager.goToNextRoom();
 
-        // Ustaw gracza w środku nowego pokoju
-        player.setPosition(screenWidth/2, screenHeight/2, roomManager.getCurrentRoom());
-        player.setRotation(0); // Resetuj kierunek patrzenia
+     float margin = 30f;
+     switch(lastExitType){
+         case "bottom":
+             player.setPosition(screenWidth/2, screenHeight-margin);
+             break;
+         case "top":
+             player.setPosition(screenWidth/2, margin);
+             break;
+         case "left":
+             player.setPosition(screenWidth-margin, screenHeight/2);
+             break;
+         case "right":
+             player.setPosition(margin, screenHeight/2);
+             break;
+     }
 
-        isChangingRoom = false;
+     isChangingRoom = false;
     }
 
 
@@ -182,7 +222,7 @@ public class FirstScreen implements Screen, InputProcessor {
     public void resize(int width, int height) {
         screenWidth = width;
         screenHeight = height;
-        player.setPosition(width/2, height/2, roomManager.getCurrentRoom());
+        player.setPosition(width/2, height/2);
     }
 
     @Override

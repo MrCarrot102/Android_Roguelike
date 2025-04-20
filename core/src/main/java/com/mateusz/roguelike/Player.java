@@ -26,29 +26,12 @@ public class Player {
         return bounds;
     }
 
-    public void setPosition(float x, float y, Room currentRoom) {
-        Rectangle newBounds = new Rectangle(x, y, bounds.width, bounds.height);
-
-        // Sprawdzamy kolizję ze ścianami aktualnego pokoju
-        if (!currentRoom.collidesWith(newBounds)) {
-            bounds.setPosition(x, y);
-        } else {
-            // Jeśli jest kolizja, możemy dodać "odpychanie" od ścian
-            float push = 2f;
-            if (currentRoom.collidesWith(new Rectangle(x+push, y, bounds.width, bounds.height))) {
-                x -= push;
-            }
-            if (currentRoom.collidesWith(new Rectangle(x-push, y, bounds.width, bounds.height))) {
-                x += push;
-            }
-            if (currentRoom.collidesWith(new Rectangle(x, y+push, bounds.width, bounds.height))) {
-                y -= push;
-            }
-            if (currentRoom.collidesWith(new Rectangle(x, y-push, bounds.width, bounds.height))) {
-                y += push;
-            }
-            bounds.setPosition(x, y);
-        }
+    public void setPosition(float x, float y) {
+        bounds.setPosition(x, y);
+    }
+    public boolean wouldCollide(float x, float y, Room room){
+        Rectangle temp = new Rectangle(x, y, bounds.width, bounds.height);
+        return room.collidesWithWalls(temp);
     }
 
 
