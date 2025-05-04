@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -286,8 +287,15 @@ public class Room {
     }
 
     public void updateEnemies(float delta) {
-        for (Enemy enemy : enemies) {
-            enemy.update(delta, this);
+        // Używamy iteratora aby bezpiecznie usuwać martwych przeciwników
+        Iterator<Enemy> iterator = enemies.iterator();
+        while (iterator.hasNext()) {
+            Enemy enemy = iterator.next();
+            if (enemy.isAlive()) {
+                enemy.update(delta, this);
+            } else {
+                iterator.remove(); // Usuń martwego przeciwnika z listy
+            }
         }
     }
 

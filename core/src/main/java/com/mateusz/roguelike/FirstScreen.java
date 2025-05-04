@@ -32,7 +32,7 @@ public class FirstScreen implements Screen, InputProcessor {
         player = new Player(screenWidth/2, screenHeight/2, 30, 30);
         joystick = new VirtualJoystick(150, 150, 80, 45);
         roomManager = new RoomManager(screenWidth, screenHeight);
-        fovRenderer = new FOVRenderer(shapeRenderer, 90, 300);
+        fovRenderer = new FOVRenderer(shapeRenderer, 90, 300, player);
 
         Gdx.input.setInputProcessor(this);
     }
@@ -49,13 +49,12 @@ public class FirstScreen implements Screen, InputProcessor {
             return;
         }
 
-        // Aktualizacja przeciwników
+        // Aktualizacja stanów
         currentRoom.updateEnemies(delta);
-
-        // Sterowanie
+        player.update(delta, currentRoom);
         handleMovement(delta, currentRoom);
 
-        // Rysowanie - Filled shapes
+        // Rysowanie wypełnionych kształtów
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         // 1. Rysowanie pokoju (ścian i wyjść)
@@ -73,28 +72,23 @@ public class FirstScreen implements Screen, InputProcessor {
         // 4. Rysowanie gracza
         player.draw(shapeRenderer);
 
-        // 5. Rysowanie joysticka
+        // 5. Rysowanie pocisków
+        player.drawBullets(shapeRenderer);
+
+        // 6. Rysowanie joysticka
         joystick.draw(shapeRenderer);
 
-        shapeRenderer.end(); // Koniec filled shapes
+        shapeRenderer.end();
 
-        // 6. Rysowanie FOV (może wymagać innego ShapeType)
+        // 7. Rysowanie FOV (oddzielna partia renderowania)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         fovRenderer.render(player.getPosition(), player.getRotation(), currentRoom);
         shapeRenderer.end();
 
-        // Sprawdzanie wyjść i kolizji
-        checkRoomExits(currentRoom);
-
-        // Sprawdzanie kolizji z przeciwnikami
+        // Sprawdzanie kolizji i wyjść
         if (player.checkEnemyCollision(currentRoom.getEnemies())) {
-            // Obsługa kolizji - np. utrata zdrowia
             Gdx.app.log("Collision", "Player hit by enemy!");
         }
-
-
-
-        // Sprawdzanie wyjść
         checkRoomExits(currentRoom);
     }
 

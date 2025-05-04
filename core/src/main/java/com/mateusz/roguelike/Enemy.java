@@ -13,6 +13,9 @@ public class Enemy {
     private Vector2 direction;
     private float movementTimer;
     private float directionChangeTime;
+    private int health;
+    private boolean alive = true;
+
 
     public Enemy(float x, float y, float radius){
         this.bounds = new Circle(x,y,radius);
@@ -21,6 +24,14 @@ public class Enemy {
         this.direction = new Vector2(1,0).setToRandomDirection();
         this.directionChangeTime = 2f + (float)Math.random()*3f;
         this.movementTimer = 0;
+        this.health = 3;
+    }
+
+    public void takeDamage(int damage){
+        health -= damage;
+        if(health <= 0){
+            setAlive(false);
+        }
     }
     public void update(float delta, Room room) {
         movementTimer += delta;
@@ -60,4 +71,11 @@ public class Enemy {
     public Circle getBounds() {
         return bounds;
     }
+    public boolean isAlive(){
+        return alive;
+    }
+    public void setAlive(boolean alive){
+        this.alive = alive;
+    }
+
 }
