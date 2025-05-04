@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
@@ -28,7 +29,8 @@ public class FirstScreen implements Screen, InputProcessor {
         shapeRenderer = new ShapeRenderer();
         screenWidth = Gdx.graphics.getWidth();
         screenHeight = Gdx.graphics.getHeight();
-
+        shapeRenderer.setProjectionMatrix(new Matrix4()
+            .setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         player = new Player(screenWidth/2, screenHeight/2, 30, 30);
         joystick = new VirtualJoystick(150, 150, 80, 45);
         roomManager = new RoomManager(screenWidth, screenHeight);
@@ -39,6 +41,7 @@ public class FirstScreen implements Screen, InputProcessor {
 
     @Override
     public void render(float delta) {
+        // Czyszczenie ekranu
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -49,49 +52,42 @@ public class FirstScreen implements Screen, InputProcessor {
             return;
         }
 
-        // Aktualizacja stanów
-        currentRoom.updateEnemies(delta);
-        player.update(delta, currentRoom);
-        handleMovement(delta, currentRoom);
-
-        // Rysowanie wypełnionych kształtów
+        // 1. Rysowanie pokoju i przeciwników
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // 1. Rysowanie pokoju (ścian i wyjść)
         currentRoom.draw(shapeRenderer);
 
-        // 2. Rysowanie wyjść
+        // Rysowanie wyjść
         shapeRenderer.setColor(0, 1, 0, 1);
         for(Rectangle exit : currentRoom.getExits()) {
             shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
         }
 
-        // 3. Rysowanie przeciwników
+        // Rysowanie przeciwników
         currentRoom.drawEnemies(shapeRenderer);
-
-        // 4. Rysowanie gracza
-        player.draw(shapeRenderer);
-
-        // 5. Rysowanie pocisków
-        player.drawBullets(shapeRenderer);
-
-        // 6. Rysowanie joysticka
-        joystick.draw(shapeRenderer);
-
         shapeRenderer.end();
 
-        // 7. Rysowanie FOV (oddzielna partia renderowania)
+        // 2. Rysowanie FOV (półprzezroczysty)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         fovRenderer.render(player.getPosition(), player.getRotation(), currentRoom);
         shapeRenderer.end();
 
-        // Sprawdzanie kolizji i wyjść
+        // 3. Rysowanie gracza i UI (na wierzchu)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        player.draw(shapeRenderer);
+        player.drawBullets(shapeRenderer);
+        joystick.draw(shapeRenderer);
+        shapeRenderer.end();
+
+        // Aktualizacje i kolizje
+        currentRoom.updateEnemies(delta);
+        player.update(delta, currentRoom);
+        handleMovement(delta, currentRoom);
+        checkRoomExits(currentRoom);
+
         if (player.checkEnemyCollision(currentRoom.getEnemies())) {
             Gdx.app.log("Collision", "Player hit by enemy!");
         }
-        checkRoomExits(currentRoom);
     }
-
     private void handleMovement(float delta, Room currentRoom) {
         if(joystick.isTouched()){
             Vector2 direction = joystick.getDirection();

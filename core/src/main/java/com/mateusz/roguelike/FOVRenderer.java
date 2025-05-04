@@ -1,6 +1,8 @@
 package com.mateusz.roguelike;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
@@ -11,19 +13,27 @@ public class FOVRenderer{
     private float fovAngle;
     private float viewDistance;
     private Player player;
+    private Color fovColor;
 
-    public FOVRenderer(ShapeRenderer shapeRenderer, float fovAngle, float viewDistance, Player player){
+
+    public FOVRenderer(ShapeRenderer shapeRenderer, float fovAngle, float viewDistance, Player player) {
         this.shapeRenderer = shapeRenderer;
         this.fovAngle = fovAngle;
         this.viewDistance = viewDistance;
         this.player = player;
+        this.fovColor = new Color(1, 1, 1, 0.2f); // Bardziej przezroczysty
     }
 
     public void render(Vector2 playerPosition, float playerRotation, Room room) {
-        if(player == null) return;
-        shapeRenderer.setColor(new Color(1, 1, 1, 0.5f));
+        if (player == null) return;
 
-        // Rysowanie FOV
+        // Włącz blending dla przezroczystości
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+
+        shapeRenderer.setColor(1, 1, 1, 0.2f); // Biały z 20% przezroczystości
+
         Vector2 direction = new Vector2(1, 0).setAngleDeg(playerRotation);
         Vector2 leftRay = direction.cpy().rotateDeg(-fovAngle / 2);
         Vector2 rightRay = direction.cpy().rotateDeg(fovAngle / 2);
@@ -36,28 +46,24 @@ public class FOVRenderer{
             leftEnd.x, leftEnd.y,
             rightEnd.x, rightEnd.y
         );
-
-        // Sprawdzanie przeciwników w FOV
         for (Enemy enemy : room.getEnemies()) {
-            if (isInFOV(playerPosition, playerRotation, enemy.getBounds(), room)) {
-                player.shoot(); // Strzelaj tylko do widocznych przeciwników
+            if (isInFOV(playerPosition, playerRotation, enemy.getBounds())) {
+                player.shoot(); // Automatyczne strzelanie do widocznych przeciwników
             }
         }
+
+        shapeRenderer.end();
+
+        // Włącz mieszanie kolorów dla przezroczystości
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
-    private boolean isInFOV(Vector2 playerPos, float playerRot, Circle enemyBounds, Room room) {
-        // 1. Sprawdź odległość i kąt
+    private boolean isInFOV(Vector2 playerPos, float playerRot, Circle enemyBounds) {
         Vector2 toEnemy = new Vector2(enemyBounds.x - playerPos.x, enemyBounds.y - playerPos.y);
-        float distance = toEnemy.len();
         float angleToEnemy = toEnemy.angleDeg();
         float angleDiff = Math.abs(((angleToEnemy - playerRot) + 180 + 360) % 360 - 180);
 
-        if (angleDiff > fovAngle / 2 || distance > viewDistance) {
-            return false;
-        }
-
-        // 2. Sprawdź linie widzenia (raycasting)
-        Vector2 rayEnd = new Vector2(enemyBounds.x, enemyBounds.y);
-        return !hasObstacleBetween(playerPos, rayEnd, room);
+        return angleDiff <= fovAngle / 2 && toEnemy.len() <= viewDistance;
     }
 
     private boolean hasObstacleBetween(Vector2 start, Vector2 end, Room room) {
@@ -75,7 +81,5 @@ public class FOVRenderer{
         return false;
     }
 
-    public void dispose(){
-        // No need to dispose shapeRenderer here, it's managed by FirstScreen
-    }
+    public void dispose(){}
 }
