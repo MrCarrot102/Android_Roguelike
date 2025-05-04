@@ -2,8 +2,11 @@ package com.mateusz.roguelike;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+
+import java.util.List;
 
 
 public class Player {
@@ -46,6 +49,19 @@ public class Player {
     public boolean isAtExit(Room room){
         for (Rectangle exit : room.getExits()){
             if(bounds.overlaps(exit)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean checkEnemyCollision(List<Enemy> enemies) {
+        Vector2 playerPos = getPosition();
+        float playerRadius = Math.max(bounds.width, bounds.height) / 2;
+
+        for (Enemy enemy : enemies) {
+            if (enemy.getBounds().contains(playerPos) ||
+                enemy.getBounds().overlaps(new Circle(playerPos.x, playerPos.y, playerRadius))) {
                 return true;
             }
         }

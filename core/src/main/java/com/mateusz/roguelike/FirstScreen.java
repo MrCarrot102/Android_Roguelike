@@ -49,33 +49,50 @@ public class FirstScreen implements Screen, InputProcessor {
             return;
         }
 
+        // Aktualizacja przeciwników
+        currentRoom.updateEnemies(delta);
+
         // Sterowanie
         handleMovement(delta, currentRoom);
 
-        // Rysowanie
+        // Rysowanie - Filled shapes
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         // 1. Rysowanie pokoju (ścian i wyjść)
         currentRoom.draw(shapeRenderer);
 
-        // 2. Rysowanie wyjść na wierzchu
-        //shapeRenderer.setColor(0, 1, 0, 1); // Zielone wyjścia
-        //for(Rectangle exit : currentRoom.getExits()) {
-        //    shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
-        //}
+        // 2. Rysowanie wyjść
+        shapeRenderer.setColor(0, 1, 0, 1);
+        for(Rectangle exit : currentRoom.getExits()) {
+            shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
+        }
 
-        // 3. Rysowanie gracza
+        // 3. Rysowanie przeciwników
+        currentRoom.drawEnemies(shapeRenderer);
+
+        // 4. Rysowanie gracza
         player.draw(shapeRenderer);
 
-        // 4. Rysowanie joysticka
+        // 5. Rysowanie joysticka
         joystick.draw(shapeRenderer);
 
-        shapeRenderer.end();
+        shapeRenderer.end(); // Koniec filled shapes
 
-        // 5. Rysowanie FOV
+        // 6. Rysowanie FOV (może wymagać innego ShapeType)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         fovRenderer.render(player.getPosition(), player.getRotation(), currentRoom);
         shapeRenderer.end();
+
+        // Sprawdzanie wyjść i kolizji
+        checkRoomExits(currentRoom);
+
+        // Sprawdzanie kolizji z przeciwnikami
+        if (player.checkEnemyCollision(currentRoom.getEnemies())) {
+            // Obsługa kolizji - np. utrata zdrowia
+            Gdx.app.log("Collision", "Player hit by enemy!");
+        }
+
+
 
         // Sprawdzanie wyjść
         checkRoomExits(currentRoom);

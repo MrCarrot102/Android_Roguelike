@@ -18,6 +18,7 @@ public class Room {
     private RoomType type;
     private List<Rectangle> obstacles;
     private List<Rectangle> treasures;
+    private List<Enemy> enemies;
 
     public enum RoomType{
         EMPTY,
@@ -31,7 +32,7 @@ public class Room {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
         this.random = new Random();
-
+        this.enemies = new ArrayList<>();
         this.walls = new ArrayList<>();
         this.exits = new ArrayList<>();
         this.obstacles = new ArrayList<>();
@@ -42,7 +43,7 @@ public class Room {
         generateBasicWalls(); // Najpierw generujemy podstawowe ściany
         generateExits();      // Potem wyjścia
         removeWallsAtExits(); // Na końcu usuwamy fragmenty ścian tam gdzie są wyjścia
-
+        generateEnemies();
         // Reszta generowania pokoju
         switch (type) {
             case PILLARS: generatePillars(screenWidth, screenHeight); break;
@@ -274,6 +275,31 @@ public class Room {
         }
         return false;
     }
+    private void generateEnemies() {
+        int enemyCount = 1 + random.nextInt(4); // 1-4 przeciwników
+        for (int i = 0; i < enemyCount; i++) {
+            float radius = 20f + random.nextFloat() * 10f; // Rozmiar 20-30
+            float x = radius + random.nextFloat() * (screenWidth - 2 * radius);
+            float y = radius + random.nextFloat() * (screenHeight - 2 * radius);
+            enemies.add(new Enemy(x, y, radius));
+        }
+    }
+
+    public void updateEnemies(float delta) {
+        for (Enemy enemy : enemies) {
+            enemy.update(delta, this);
+        }
+    }
+
+    public void drawEnemies(ShapeRenderer shapeRenderer) {
+        for (Enemy enemy : enemies) {
+            enemy.draw(shapeRenderer);
+        }
+    }
+
+    public List<Enemy> getEnemies() {
+        return enemies;
+    }
 
     public List<Rectangle> getExits(){
         return exits;
@@ -281,5 +307,8 @@ public class Room {
 
     public int getHeight(){
         return (int) screenHeight;
+    }
+    public int getWidth(){
+        return (int) screenWidth;
     }
 }
