@@ -35,12 +35,65 @@ public class Room {
         this.walls = new ArrayList<>();
         this.exits = new ArrayList<>();
         this.obstacles = new ArrayList<>();
-        this.treasures = new ArrayList<>();  // To było brakujące!
+        this.treasures = new ArrayList<>();
 
-        this.type = RoomType.values()[new Random().nextInt(RoomType.values().length)];
-        generateRoom(screenWidth, screenHeight);
+        this.type = RoomType.values()[random.nextInt(RoomType.values().length)];
 
-        generateExits();
+        generateBasicWalls(); // Najpierw generujemy podstawowe ściany
+        generateExits();      // Potem wyjścia
+        removeWallsAtExits(); // Na końcu usuwamy fragmenty ścian tam gdzie są wyjścia
+
+        // Reszta generowania pokoju
+        switch (type) {
+            case PILLARS: generatePillars(screenWidth, screenHeight); break;
+            case MAZE: generateMaze(screenWidth, screenHeight); break;
+            case TREASURE: generateTresures(screenWidth, screenHeight); break;
+            case ENEMY_CAMP: generateEnemyCamp(screenWidth, screenHeight); break;
+        }
+    }
+
+    private void generateBasicWalls() {
+        // Podstawowe ściany (pełne, bez wyjść)
+        walls.add(new Rectangle(0, 0, screenWidth, 20)); // Dolna ściana
+        walls.add(new Rectangle(0, screenHeight - 20, screenWidth, 20)); // Górna ściana
+        walls.add(new Rectangle(0, 0, 20, screenHeight)); // Lewa ściana
+        walls.add(new Rectangle(screenWidth - 20, 0, 20, screenHeight)); // Prawa ściana
+    }
+
+    private void removeWallsAtExits() {
+        List<Rectangle> wallsToRemove = new ArrayList<>();
+        List<Rectangle> wallsToAdd = new ArrayList<>();
+
+        for (Rectangle exit : exits) {
+            for (Rectangle wall : walls) {
+                // Sprawdzamy które ściany pokrywają się z wyjściami
+                if (wall.overlaps(exit)) {
+                    wallsToRemove.add(wall);
+
+                    // Dzielimy ścianę na części przed i za wyjściem
+                    if (wall.width > wall.height) { // Pozioma ściana (górna/dolna)
+                        if (wall.x < exit.x) {
+                            wallsToAdd.add(new Rectangle(wall.x, wall.y, exit.x - wall.x, wall.height));
+                        }
+                        if (exit.x + exit.width < wall.x + wall.width) {
+                            wallsToAdd.add(new Rectangle(exit.x + exit.width, wall.y,
+                                (wall.x + wall.width) - (exit.x + exit.width), wall.height));
+                        }
+                    } else { // Pionowa ściana (lewa/prawa)
+                        if (wall.y < exit.y) {
+                            wallsToAdd.add(new Rectangle(wall.x, wall.y, wall.width, exit.y - wall.y));
+                        }
+                        if (exit.y + exit.height < wall.y + wall.height) {
+                            wallsToAdd.add(new Rectangle(wall.x, exit.y + exit.height, wall.width,
+                                (wall.y + wall.height) - (exit.y + exit.height)));
+                        }
+                    }
+                }
+            }
+        }
+
+        walls.removeAll(wallsToRemove);
+        walls.addAll(wallsToAdd);
     }
     private void generateRoom(float width, float height){
         walls = new ArrayList<>();
@@ -87,16 +140,17 @@ public class Room {
     }
 
     private void generateTresures(float width, float height){
-        int pillarCount = 3 + new Random().nextInt(3);
-        for(int i = 0; i < pillarCount; i++){
+        int treasureCount = 3 + new Random().nextInt(3);
+        for(int i = 0; i < treasureCount; i++){
             float x = 100 + new Random().nextFloat() * (width - 200);
             float y = 100 + new Random().nextFloat() * (height - 200);
-            obstacles.add(new Rectangle(x,y,40,40));
+            treasures.add(new Rectangle(x,y,20,20));  // Dodanie skarbów do listy treasures zamiast obstacles
         }
     }
+
     private void generateEnemyCamp(float width, float height){
-        int pillarCount = 3 + new Random().nextInt(3);
-        for(int i = 0; i < pillarCount; i++){
+        int enemyCount = 3 + new Random().nextInt(3);
+        for(int i = 0; i < enemyCount; i++){
             float x = 100 + new Random().nextFloat() * (width - 200);
             float y = 100 + new Random().nextFloat() * (height - 200);
             obstacles.add(new Rectangle(x,y,40,40));
@@ -105,7 +159,7 @@ public class Room {
 
 
     private void generateExits() {
-        exits.clear(); // Czyścimy stare wyjścia
+        exits.clear();
 
         // Zawsze generujemy przynajmniej 1 wyjście
         String[] possibleExits = {"bottom", "top", "left", "right"};
@@ -116,31 +170,52 @@ public class Room {
 
         for(int i = 0; i < exitCount && !exitsToGenerate.isEmpty(); i++) {
             String exitPos = exitsToGenerate.remove(0);
+            addExit(exitPos);
+        }
+    }
 
-            switch(exitPos) {
-                case "bottom":
-                    exits.add(new Rectangle(screenWidth/2-50, 0, 100, 20));
-                    break;
-                case "top":
-                    exits.add(new Rectangle(screenWidth/2-50, screenHeight-20, 100, 20));
-                    break;
-                case "left":
-                    exits.add(new Rectangle(0, screenHeight/2-50, 20, 100));
-                    break;
-                case "right":
-                    exits.add(new Rectangle(screenWidth-20, screenHeight/2-50, 20, 100));
-                    break;
-            }
+    private void addExit(String position) {
+        switch(position) {
+            case "bottom":
+                exits.add(new Rectangle(screenWidth/2-50, 0, 100, 20));
+                break;
+            case "top":
+                exits.add(new Rectangle(screenWidth/2-50, screenHeight-20, 100, 20));
+                break;
+            case "left":
+                exits.add(new Rectangle(0, screenHeight/2-50, 20, 100));
+                break;
+            case "right":
+                exits.add(new Rectangle(screenWidth-20, screenHeight/2-50, 20, 100));
+                break;
         }
     }
 
     public void draw(ShapeRenderer shapeRenderer){
+        // Tło pokoju
+        shapeRenderer.setColor(0.1f, 0.1f, 0.1f, 1);
+        shapeRenderer.rect(0, 0, screenWidth, screenHeight);
+
+        // Ściany (już z wyciętymi wyjściami)
+        shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 1);
+        for (Rectangle wall : walls) {
+            shapeRenderer.rect(wall.x, wall.y, wall.width, wall.height);
+        }
+
+        // Ewentualne podświetlenie wyjść (opcjonalne)
+        shapeRenderer.setColor(0, 1, 0, 0.3f);
+        for (Rectangle exit : exits) {
+            shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
+        }
         switch(type){
             case EMPTY:
                 shapeRenderer.setColor(0.1f, 0.1f,0.1f,1);
                 break;
             case PILLARS:
                 shapeRenderer.setColor(0.2f,0.15f,0.1f,1);
+                break;
+            case MAZE:
+                shapeRenderer.setColor(0.15f,0.15f,0.2f,1);  // Dodany kolor dla labiryntu
                 break;
             case TREASURE:
                 shapeRenderer.setColor(0.1f,0.1f,0.3f,1);
@@ -171,21 +246,9 @@ public class Room {
         }
     }
 
-    public boolean collidesWith(Rectangle bounds){
-        for(Rectangle wall : walls){
-            if (wall.overlaps(bounds)){
-                return true;
-            }
-        }
-        for(Rectangle obstacle : obstacles){
-            if(obstacle.overlaps(bounds)) return true;
-        }
-        return false;
-    }
-
     public boolean collidesWithWalls(Rectangle bounds){
         for(Rectangle wall : walls){
-            if (wall.overlaps (bounds)) return true;
+            if (wall.overlaps(bounds)) return true;
         }
         for(Rectangle obstacle : obstacles){
             if (obstacle.overlaps(bounds)) return true;
@@ -201,4 +264,3 @@ public class Room {
         return (int) screenHeight;
     }
 }
-

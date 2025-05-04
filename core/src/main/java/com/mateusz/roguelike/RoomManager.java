@@ -20,10 +20,13 @@ public class RoomManager {
         currentRoomIndex = 0;
     }
 
-    public void goToNextRoom(){
+    public void goToNextRoom() {
         currentRoomIndex = (currentRoomIndex + 1) % rooms.size();
-        if(currentRoomIndex == 0){
-            rooms.add(new Room(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
+        if (currentRoomIndex == 0) {
+            Room newRoom = new Room(screenWidth, screenHeight);
+            // Zapewnij, że nowy pokój ma wyjście odpowiadające kierunkowi wejścia
+            //newRoom.forceExit(lastExitType);
+            rooms.add(newRoom);
         }
     }
 

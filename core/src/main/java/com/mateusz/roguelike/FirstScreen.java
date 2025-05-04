@@ -23,8 +23,6 @@ public class FirstScreen implements Screen, InputProcessor {
     private float roomChangeTimer = 0;
     private final float ROOM_CHANGE_TIME = 0.5f;
 
-    
-
     @Override
     public void show() {
         shapeRenderer = new ShapeRenderer();
@@ -61,18 +59,22 @@ public class FirstScreen implements Screen, InputProcessor {
         currentRoom.draw(shapeRenderer);
 
         // 2. Rysowanie wyjść na wierzchu
-        shapeRenderer.setColor(0, 1, 0, 1); // Zielone wyjścia
-        for(Rectangle exit : currentRoom.getExits()) {
-            shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
-        }
+        //shapeRenderer.setColor(0, 1, 0, 1); // Zielone wyjścia
+        //for(Rectangle exit : currentRoom.getExits()) {
+        //    shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
+        //}
 
         // 3. Rysowanie gracza
         player.draw(shapeRenderer);
+
+        // 4. Rysowanie joysticka
+        joystick.draw(shapeRenderer);
+
         shapeRenderer.end();
 
-        // 4. Rysowanie FOV
+        // 5. Rysowanie FOV
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        //fovRenderer.render(player.getPosition(), player.getRotation());
+        fovRenderer.render(player.getPosition(), player.getRotation(), currentRoom);
         shapeRenderer.end();
 
         // Sprawdzanie wyjść
@@ -84,13 +86,15 @@ public class FirstScreen implements Screen, InputProcessor {
             Vector2 direction = joystick.getDirection();
             float speed = 150 * delta;
 
-            float newX = player.getBounds().x + direction.x * speed;
-            float newY = player.getBounds().y + direction.y * speed;
+            // Pobieramy aktualną pozycję środka gracza
+            Vector2 playerPos = player.getPosition();
 
-            Rectangle tempBounds = new Rectangle(newX, newY,
-                player.getBounds().width, player.getBounds().height);
+            // Obliczamy nową pozycję
+            float newX = playerPos.x + direction.x * speed;
+            float newY = playerPos.y + direction.y * speed;
 
-            if(!currentRoom.collidesWithWalls(tempBounds)){
+            // Sprawdzamy kolizję używając metody wouldCollide
+            if(!player.wouldCollide(newX, newY, currentRoom)){
                 player.setPosition(newX, newY);
             }
 
@@ -99,34 +103,27 @@ public class FirstScreen implements Screen, InputProcessor {
     }
 
     private void checkRoomExits(Room currentRoom) {
-        Rectangle playerBounds = player.getBounds();
+        Vector2 playerPos = player.getPosition();
+        float playerSize = Math.max(player.getBounds().width, player.getBounds().height);
 
-        for (Rectangle exit : currentRoom.getExits()){
-            if (exit.overlaps(playerBounds)){
-                String exitType = getExitType(exit, currentRoom);
-                handleRoomTransition(exitType);
-                return;
-            }
+        // Sprawdzamy czy gracz dotyka krawędzi ekranu
+        if (playerPos.x <= 0) {
+            handleRoomTransition("left");
+        } else if (playerPos.x >= screenWidth) {
+            handleRoomTransition("right");
+        } else if (playerPos.y <= 0) {
+            handleRoomTransition("bottom");
+        } else if (playerPos.y >= screenHeight) {
+            handleRoomTransition("top");
         }
     }
 
-    private String getExitType(Rectangle exit, Room room){
-        if (exit.y == 0) return "bottom";
-        if (exit.y == room.getHeight() - exit.height) return "top";
-        if (exit.x == 0) return "left";
-        return "right";
-    }
 
     private void handleRoomTransition(String exitType){
         isChangingRoom = true;
         roomChangeTimer = 0;
 
         this.lastExitType = exitType;
-    }
-
-    private void startRoomTransition() {
-        isChangingRoom = true;
-        roomChangeTimer = 0;
     }
 
     private void renderRoomTransition(float delta) {
@@ -144,28 +141,26 @@ public class FirstScreen implements Screen, InputProcessor {
     }
 
     private void completeRoomTransition() {
-     roomManager.goToNextRoom();
+        roomManager.goToNextRoom();
+        float spawnMargin = 30f;
 
-     float margin = 30f;
-     switch(lastExitType){
-         case "bottom":
-             player.setPosition(screenWidth/2, screenHeight-margin);
-             break;
-         case "top":
-             player.setPosition(screenWidth/2, margin);
-             break;
-         case "left":
-             player.setPosition(screenWidth-margin, screenHeight/2);
-             break;
-         case "right":
-             player.setPosition(margin, screenHeight/2);
-             break;
-     }
+        switch (lastExitType) {
+            case "left":
+                player.setPosition(screenWidth - spawnMargin, screenHeight/2);
+                break;
+            case "right":
+                player.setPosition(spawnMargin, screenHeight/2);
+                break;
+            case "bottom":
+                player.setPosition(screenWidth/2, screenHeight - spawnMargin);
+                break;
+            case "top":
+                player.setPosition(screenWidth/2, spawnMargin);
+                break;
+        }
 
-     isChangingRoom = false;
+        isChangingRoom = false;
     }
-
-
 
     @Override
     public boolean keyDown(int keycode) {
@@ -185,7 +180,7 @@ public class FirstScreen implements Screen, InputProcessor {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button){
         joystick.setTouched(true);
-        joystick.update(screenX,Gdx.graphics.getHeight() - screenY);
+        joystick.update(screenX, Gdx.graphics.getHeight() - screenY);
         return true;
     }
 
@@ -239,5 +234,4 @@ public class FirstScreen implements Screen, InputProcessor {
         shapeRenderer.dispose();
         fovRenderer.dispose();
     }
-
 }
