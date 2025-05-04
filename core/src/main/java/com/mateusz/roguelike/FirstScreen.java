@@ -122,8 +122,8 @@ public class FirstScreen implements Screen, InputProcessor {
     private void handleRoomTransition(String exitType){
         isChangingRoom = true;
         roomChangeTimer = 0;
-
         this.lastExitType = exitType;
+        roomManager.setLastExitType(exitType);
     }
 
     private void renderRoomTransition(float delta) {
@@ -141,7 +141,7 @@ public class FirstScreen implements Screen, InputProcessor {
     }
 
     private void completeRoomTransition() {
-        roomManager.goToNextRoom();
+        roomManager.goToNextRoom(lastExitType);
         float spawnMargin = 30f;
 
         switch (lastExitType) {

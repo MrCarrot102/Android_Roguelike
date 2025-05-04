@@ -246,6 +246,25 @@ public class Room {
         }
     }
 
+    public void forceExit(String exitType){
+        exits.clear();
+        switch(exitType){
+            case "left":
+                exits.add(new Rectangle(0,screenHeight/2-50,20,100));
+                break;
+            case "right":
+                exits.add(new Rectangle(screenWidth-20,screenHeight/2-50,20,100));
+                break;
+            case "top":
+                exits.add(new Rectangle(screenWidth/2-50,screenHeight-20,100,20));
+                break;
+            case "bottom":
+                exits.add(new Rectangle(screenWidth/2-50,0,100,20));
+                break;
+        }
+        removeWallsAtExits();
+    }
+
     public boolean collidesWithWalls(Rectangle bounds){
         for(Rectangle wall : walls){
             if (wall.overlaps(bounds)) return true;

@@ -9,6 +9,9 @@ public class RoomManager {
     private List<Room> rooms;
     private int currentRoomIndex;
     private float screenWidth, screenHeight;
+    private String lastExitType;
+
+    public void setLastExitType(String exitType) { this.lastExitType = exitType;}
 
     public RoomManager(float screenWidth, float screenHeight){
         this.screenWidth = screenWidth;
@@ -20,15 +23,17 @@ public class RoomManager {
         currentRoomIndex = 0;
     }
 
-    public void goToNextRoom() {
+    public void goToNextRoom(String lastExitType) {
         currentRoomIndex = (currentRoomIndex + 1) % rooms.size();
         if (currentRoomIndex == 0) {
             Room newRoom = new Room(screenWidth, screenHeight);
             // Zapewnij, że nowy pokój ma wyjście odpowiadające kierunkowi wejścia
-            //newRoom.forceExit(lastExitType);
+            newRoom.forceExit(lastExitType);
             rooms.add(newRoom);
         }
     }
+
+
 
     public Room getCurrentRoom(){
         return rooms.get(currentRoomIndex);
