@@ -16,7 +16,7 @@ public class Enemy {
     private boolean alive = true;
     private float fovAngle = (float) Math.toRadians(90); // kąt widzenia w radianach
     private float viewDistance = 250f;
-
+    private Room room;
     private float shootCooldown = 1.5f;
     private float timeSinceLastShot = 0f;
 
@@ -97,6 +97,7 @@ public class Enemy {
         return bounds;
     }
 
+
     public float getX() {
         return bounds.x;
     }
@@ -123,9 +124,15 @@ public class Enemy {
 
     public void takeDamage(int damage) {
         health -= damage;
-        if (health <= 0) {
+
+        if (health <= 0 && alive) {
             alive = false;
-            // opcjonalnie: wyłącz wroga, animacja śmierci itd.
+
+            if (Math.random() < 0.3) {
+                if (room != null) {
+                    room.spawnMedkit(bounds.x, bounds.y);
+                }
+            }
         }
     }
 

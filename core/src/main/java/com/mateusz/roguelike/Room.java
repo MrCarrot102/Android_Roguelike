@@ -1,13 +1,10 @@
 package com.mateusz.roguelike;
 
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -22,6 +19,7 @@ public class Room {
     private List<Enemy> enemies;
     private Player player;
     private FOVRenderer fovRenderer;
+    private List<Medkit> medkits = new ArrayList<>();
 
     public enum RoomType{
         EMPTY,
@@ -194,6 +192,9 @@ public class Room {
                 break;
         }
     }
+    public void spawnMedkit(float x, float y) {
+        medkits.add(new Medkit(x, y));
+    }
 
     public void draw(ShapeRenderer shapeRenderer){
         // Tło pokoju
@@ -248,6 +249,9 @@ public class Room {
         for(Rectangle treasure : treasures){
             shapeRenderer.rect(treasure.x, treasure.y, treasure.width, treasure.height);
         }
+        for (Medkit medkit : medkits) {
+            medkit.draw(shapeRenderer);
+        }
     }
 
     public void forceExit(String exitType){
@@ -289,8 +293,21 @@ public class Room {
     }
 
     public void updateEnemies(float delta, Player player, FOVRenderer fovRenderer) {
-        for (Enemy enemy : enemies) {
+        for (int i = enemies.size() - 1; i >= 0; i--) {
+            Enemy enemy = enemies.get(i);
+
+            if (!enemy.isAlive()) {
+                enemies.remove(i); // usuń martwego wroga z listy
+                continue;
+            }
+
             enemy.update(delta, this, player, fovRenderer);
+        }
+
+        for (int i = medkits.size() - 1; i >= 0; i--) {
+            if (medkits.get(i).checkCollected(player)) {
+                medkits.remove(i);
+            }
         }
     }
 
