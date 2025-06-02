@@ -17,6 +17,8 @@ public class Player {
     private List<Bullet> bullets;
     private float shootTimer;
     private final float SHOOT_INTERVAL = 0.3f;
+    
+
 
     public Player(float x, float y, float width, float height){
         bounds = new Rectangle(x - width/2, y - height/2, width, height);

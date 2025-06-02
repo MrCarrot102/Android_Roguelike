@@ -149,21 +149,47 @@ public class FirstScreen implements Screen, InputProcessor {
 
     private void completeRoomTransition() {
         roomManager.goToNextRoom(lastExitType);
+        Room currentRoom = roomManager.getCurrentRoom();
         float spawnMargin = 30f;
+        float baseX = 0, baseY = 0;
 
         switch (lastExitType) {
             case "left":
-                player.setPosition(screenWidth - spawnMargin, screenHeight/2);
+                baseX = screenWidth - spawnMargin;
+                baseY = screenHeight / 2;
                 break;
             case "right":
-                player.setPosition(spawnMargin, screenHeight/2);
+                baseX = spawnMargin;
+                baseY = screenHeight / 2;
                 break;
             case "bottom":
-                player.setPosition(screenWidth/2, screenHeight - spawnMargin);
+                baseX = screenWidth / 2;
+                baseY = screenHeight - spawnMargin;
                 break;
             case "top":
-                player.setPosition(screenWidth/2, spawnMargin);
+                baseX = screenWidth / 2;
+                baseY = spawnMargin;
                 break;
+        }
+        if (!player.wouldCollide(baseX, baseY, currentRoom)) {
+            player.setPosition(baseX, baseY);
+        } else {
+            boolean placed = false;
+            for (float dx = -20; dx <= 20 && !placed; dx += 5) {
+                for (float dy = -20; dy <= 20 && !placed; dy += 5) {
+                    float tryX = baseX + dx;
+                    float tryY = baseY + dy;
+                    if (!player.wouldCollide(tryX, tryY, currentRoom)) {
+                        player.setPosition(tryX, tryY);
+                        placed = true;
+                    }
+                }
+            }
+
+            if (!placed) {
+                // Ostateczność — ustaw mimo wszystko (lepiej być w ścianie niż zniknąć)
+                player.setPosition(baseX, baseY);
+            }
         }
 
         isChangingRoom = false;
