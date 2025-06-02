@@ -1,14 +1,15 @@
 package com.mateusz.roguelike;
 
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.graphics.Color;
 
 public class FirstScreen implements Screen, InputProcessor {
     private ShapeRenderer shapeRenderer;
@@ -71,21 +72,40 @@ public class FirstScreen implements Screen, InputProcessor {
         fovRenderer.render(player.getPosition(), player.getRotation(), currentRoom);
         shapeRenderer.end();
 
-        // 3. Rysowanie gracza i UI (na wierzchu)
+        // Rysowanie gracza i UI (ostatni blok renderowania)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         player.draw(shapeRenderer);
         player.drawBullets(shapeRenderer);
         joystick.draw(shapeRenderer);
         shapeRenderer.end();
 
+// Pasek zdrowia w lewym górnym rogu
+        float barX = 20f;
+        float barY = screenHeight - 30f;
+        float barWidth = 200f;
+        float barHeight = 20f;
+        float healthPercent = (float) player.getCurrentHealth() / player.getMaxHealth();
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.DARK_GRAY);
+        shapeRenderer.rect(barX, barY, barWidth, barHeight);
+        shapeRenderer.setColor(Color.RED);
+        shapeRenderer.rect(barX, barY, barWidth * healthPercent, barHeight);
+        shapeRenderer.end();
+
         // Aktualizacje i kolizje
         currentRoom.updateEnemies(delta);
-        player.update(delta, currentRoom);
+        player.update(delta, currentRoom, player);
         handleMovement(delta, currentRoom);
         checkRoomExits(currentRoom);
 
         if (player.checkEnemyCollision(currentRoom.getEnemies())) {
-            Gdx.app.log("Collision", "Player hit by enemy!");
+            player.takeDamage(10);
+            Gdx.app.log("Collision", "Player hit! HP: " + player.getCurrentHealth());
+        }
+        if (player.isDead()) {
+            ((com.badlogic.gdx.Game) Gdx.app.getApplicationListener()).setScreen(new GameOverScreen(player.getScore()));
+            return;
         }
     }
     private void handleMovement(float delta, Room currentRoom) {

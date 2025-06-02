@@ -17,7 +17,9 @@ public class Player {
     private List<Bullet> bullets;
     private float shootTimer;
     private final float SHOOT_INTERVAL = 0.3f;
-    
+    private int maxHealth = 100;
+    private int currentHealth = 100;
+    private int score = 0;
 
 
     public Player(float x, float y, float width, float height){
@@ -35,7 +37,6 @@ public class Player {
         shapeRenderer.setColor(color);
         shapeRenderer.rect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        // Rysowanie wskazówki kierunku (przód gracza)
         Vector2 center = getPosition();
         Vector2 front = new Vector2(1, 0).setAngleDeg(rotation).scl(20).add(center);
 
@@ -69,14 +70,14 @@ public class Player {
         return false;
     }
 
-    public void update(float delta, Room room) {
+    public void update(float delta, Room room, Player player) {
         shootTimer -= delta;
 
         // Aktualizacja pocisków
         for (Bullet bullet : bullets) {
             if (bullet.isActive()) {
                 bullet.update(delta);
-                checkBulletCollision(bullet, room);
+                checkBulletCollision(bullet, room, player);
             }
         }
     }
@@ -100,7 +101,7 @@ public class Player {
         }
     }
 
-    private void checkBulletCollision(Bullet bullet, Room room) {
+    private void checkBulletCollision(Bullet bullet, Room room, Player player) {
         // Kolizja ze ścianami
         Rectangle bulletRect = new Rectangle(
             bullet.getBounds().x - bullet.getBounds().radius,
@@ -118,6 +119,7 @@ public class Player {
         for (Enemy enemy : room.getEnemies()) {
             if (bullet.getBounds().overlaps(enemy.getBounds())) {
                 enemy.takeDamage(1); // Dodaj metodę takeDamage() w klasie Enemy
+                player.addScore(100);
                 bullet.deactivate();
                 return;
             }
@@ -140,5 +142,32 @@ public class Player {
 
     public Vector2 getPosition(){
         return new Vector2(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    }
+    public void takeDamage(int amount) {
+        currentHealth -= amount;
+        if (currentHealth < 0) currentHealth = 0;
+    }
+
+    public void heal(int amount) {
+        currentHealth += amount;
+        if (currentHealth > maxHealth) currentHealth = maxHealth;
+    }
+
+    public boolean isDead() {
+        return currentHealth <= 0;
+    }
+    public int getCurrentHealth() {
+        return currentHealth;
+    }
+
+    public int getMaxHealth() {
+        return maxHealth;
+    }
+    public int getScore() {
+        return score;
+    }
+
+    public void addScore(int value) {
+        score += value;
     }
 }
