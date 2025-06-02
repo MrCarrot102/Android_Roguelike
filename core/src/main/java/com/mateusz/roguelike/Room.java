@@ -20,6 +20,7 @@ public class Room {
     private Player player;
     private FOVRenderer fovRenderer;
     private List<Medkit> medkits = new ArrayList<>();
+    private int level;
 
     public enum RoomType{
         EMPTY,
@@ -29,7 +30,7 @@ public class Room {
         ENEMY_CAMP
     }
 
-    public Room(float screenWidth, float screenHeight) {
+    public Room(float screenWidth, float screenHeight, int level) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
         this.random = new Random();
@@ -38,14 +39,16 @@ public class Room {
         this.exits = new ArrayList<>();
         this.obstacles = new ArrayList<>();
         this.treasures = new ArrayList<>();
+        this.medkits = new ArrayList<>();
+        this.level = level;
 
         this.type = RoomType.values()[random.nextInt(RoomType.values().length)];
 
-        generateBasicWalls(); // Najpierw generujemy podstawowe ściany
-        generateExits();      // Potem wyjścia
-        removeWallsAtExits(); // Na końcu usuwamy fragmenty ścian tam gdzie są wyjścia
+        generateBasicWalls();
+        generateExits();
+        removeWallsAtExits();
         generateEnemies();
-        // Reszta generowania pokoju
+
         switch (type) {
             case PILLARS: generatePillars(screenWidth, screenHeight); break;
             case MAZE: generateMaze(screenWidth, screenHeight); break;
@@ -53,6 +56,7 @@ public class Room {
             case ENEMY_CAMP: generateEnemyCamp(screenWidth, screenHeight); break;
         }
     }
+
 
     private void generateBasicWalls() {
         // Podstawowe ściany (pełne, bez wyjść)
@@ -282,10 +286,17 @@ public class Room {
         }
         return false;
     }
+    private static int globalRoomCounter = 0;  // Statyczny licznik pokoi
+
     private void generateEnemies() {
-        int enemyCount = 1 + random.nextInt(4); // 1-4 przeciwników
-        for (int i = 0; i < enemyCount; i++) {
-            float radius = 20f + random.nextFloat() * 10f; // Rozmiar 20-30
+        globalRoomCounter++; // zwiększamy za każdym razem gdy generujemy pokój
+
+        int baseEnemies = 3;
+        int scalingEnemies = globalRoomCounter / 2; // co 2 pokoje +1 wróg
+        int totalEnemies = baseEnemies + scalingEnemies;
+
+        for (int i = 0; i < totalEnemies; i++) {
+            float radius = 20f + random.nextFloat() * 10f;
             float x = radius + random.nextFloat() * (screenWidth - 2 * radius);
             float y = radius + random.nextFloat() * (screenHeight - 2 * radius);
             enemies.add(new Enemy(x, y, radius));
