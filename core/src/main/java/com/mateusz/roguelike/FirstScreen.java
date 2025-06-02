@@ -6,6 +6,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -63,8 +64,14 @@ public class FirstScreen implements Screen, InputProcessor {
             shapeRenderer.rect(exit.x, exit.y, exit.width, exit.height);
         }
 
-        // Rysowanie przeciwników
+        // Rysowanie przeciwników i ich pocisków
         currentRoom.drawEnemies(shapeRenderer);
+        for (Enemy enemy : currentRoom.getEnemies()) {
+            for (Bullet bullet : enemy.getBullets()) {
+                bullet.draw(shapeRenderer);
+            }
+        }
+
         shapeRenderer.end();
 
         // 2. Rysowanie FOV (półprzezroczysty)
@@ -72,14 +79,14 @@ public class FirstScreen implements Screen, InputProcessor {
         fovRenderer.render(player.getPosition(), player.getRotation(), currentRoom);
         shapeRenderer.end();
 
-        // Rysowanie gracza i UI (ostatni blok renderowania)
+        // 3. Rysowanie gracza, jego pocisków i joysticka
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         player.draw(shapeRenderer);
         player.drawBullets(shapeRenderer);
         joystick.draw(shapeRenderer);
         shapeRenderer.end();
 
-// Pasek zdrowia w lewym górnym rogu
+        // Pasek zdrowia w lewym górnym rogu
         float barX = 20f;
         float barY = screenHeight - 30f;
         float barWidth = 200f;
@@ -93,22 +100,38 @@ public class FirstScreen implements Screen, InputProcessor {
         shapeRenderer.rect(barX, barY, barWidth * healthPercent, barHeight);
         shapeRenderer.end();
 
-        // Aktualizacje i kolizje
+        // 4. Aktualizacje logiki gry
         currentRoom.updateEnemies(delta, player, fovRenderer);
         player.update(delta, currentRoom, player);
         handleMovement(delta, currentRoom);
         checkRoomExits(currentRoom);
 
+        // 5. Sprawdzenie kolizji z przeciwnikami (kontakt bezpośredni)
         if (player.checkEnemyCollision(currentRoom.getEnemies())) {
             player.takeDamage(10);
             Gdx.app.log("Collision", "Player hit! HP: " + player.getCurrentHealth());
         }
-        if (player.isDead()) {
-            ((com.badlogic.gdx.Game) Gdx.app.getApplicationListener()).setScreen(new GameOverScreen(player.getScore()));
-            return;
+
+        // 6. Sprawdzenie kolizji z pociskami przeciwników
+        for (Enemy enemy : currentRoom.getEnemies()) {
+            for (Bullet bullet : enemy.getBullets()) {
+                if (bullet.isActive() && Intersector.overlaps(bullet.getBounds(), player.getBounds()))
+                {
+                    bullet.deactivate();
+                    player.takeDamage(40);
+                    Gdx.app.log("Hit", "Player hit by bullet! HP: " + player.getCurrentHealth());
+                }
+            }
         }
 
+        // 7. Sprawdzenie śmierci gracza
+        if (player.isDead()) {
+            ((com.badlogic.gdx.Game) Gdx.app.getApplicationListener())
+                .setScreen(new GameOverScreen(player.getScore()));
+            return;
+        }
     }
+
     private void handleMovement(float delta, Room currentRoom) {
         if(joystick.isTouched()){
             Vector2 direction = joystick.getDirection();

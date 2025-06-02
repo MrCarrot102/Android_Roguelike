@@ -49,6 +49,7 @@ public class Bullet {
         active = false;
     }
 
+
     public Circle getBounds() {
         return bounds;
     }
