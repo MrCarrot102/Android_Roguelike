@@ -20,6 +20,8 @@ public class Room {
     private List<Rectangle> obstacles;
     private List<Rectangle> treasures;
     private List<Enemy> enemies;
+    private Player player;
+    private FOVRenderer fovRenderer;
 
     public enum RoomType{
         EMPTY,
@@ -286,16 +288,9 @@ public class Room {
         }
     }
 
-    public void updateEnemies(float delta) {
-        // Używamy iteratora aby bezpiecznie usuwać martwych przeciwników
-        Iterator<Enemy> iterator = enemies.iterator();
-        while (iterator.hasNext()) {
-            Enemy enemy = iterator.next();
-            if (enemy.isAlive()) {
-                enemy.update(delta, this);
-            } else {
-                iterator.remove(); // Usuń martwego przeciwnika z listy
-            }
+    public void updateEnemies(float delta, Player player, FOVRenderer fovRenderer) {
+        for (Enemy enemy : enemies) {
+            enemy.update(delta, this, player, fovRenderer);
         }
     }
 

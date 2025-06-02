@@ -170,4 +170,13 @@ public class Player {
     public void addScore(int value) {
         score += value;
     }
+
+    public float getX() {
+        return bounds.x;
+    }
+
+    public float getY() {
+        return bounds.y;
+    }
+
 }

@@ -80,6 +80,25 @@ public class FOVRenderer{
         }
         return false;
     }
+    public boolean isPlayerVisibleTo(Enemy enemy, Player player) {
+        float dx = player.getX() - enemy.getX();
+        float dy = player.getY() - enemy.getY();
+        float angleToPlayer = (float) Math.atan2(dy, dx);
+
+        float enemyAngle = (float) Math.atan2(enemy.getDirection().y, enemy.getDirection().x);
+
+        float deltaAngle = angleDifference(enemyAngle, angleToPlayer);
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+        return Math.abs(deltaAngle) < enemy.getFovAngle() / 2f && distance < enemy.getViewDistance();
+    }
+
+    private float angleDifference(float a, float b) {
+        float diff = a - b;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        return diff;
+    }
 
     public void dispose(){}
 }

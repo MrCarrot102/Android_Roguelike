@@ -94,7 +94,7 @@ public class FirstScreen implements Screen, InputProcessor {
         shapeRenderer.end();
 
         // Aktualizacje i kolizje
-        currentRoom.updateEnemies(delta);
+        currentRoom.updateEnemies(delta, player, fovRenderer);
         player.update(delta, currentRoom, player);
         handleMovement(delta, currentRoom);
         checkRoomExits(currentRoom);
@@ -107,6 +107,7 @@ public class FirstScreen implements Screen, InputProcessor {
             ((com.badlogic.gdx.Game) Gdx.app.getApplicationListener()).setScreen(new GameOverScreen(player.getScore()));
             return;
         }
+
     }
     private void handleMovement(float delta, Room currentRoom) {
         if(joystick.isTouched()){

@@ -15,7 +15,9 @@ public class Enemy {
     private float directionChangeTime;
     private int health;
     private boolean alive = true;
-
+    private boolean chasingPlayer = false;
+    private float fovAngle = 90f; // w stopniach lub radianach, zależnie od FOVRenderer
+    private float viewDistance = 200f; // zasięg widzenia
 
     public Enemy(float x, float y, float radius){
         this.bounds = new Circle(x,y,radius);
@@ -33,13 +35,25 @@ public class Enemy {
             setAlive(false);
         }
     }
-    public void update(float delta, Room room) {
+    public void update(float delta, Room room, Player player, FOVRenderer fovRenderer) {
         movementTimer += delta;
 
-        // Zmiana kierunku po upływie czasu lub kolizji
-        if (movementTimer >= directionChangeTime || checkWallCollision(room)) {
-            direction.setToRandomDirection();
-            movementTimer = 0;
+        // Sprawdzenie, czy gracz jest w polu widzenia
+        boolean playerVisible = fovRenderer.isPlayerVisibleTo(this, player);
+
+        if (playerVisible) {
+            // GONIENIE GRACZA
+            Vector2 toPlayer = new Vector2(player.getX() - bounds.x, player.getY() - bounds.y);
+            if (toPlayer.len() > 0.1f) {
+                toPlayer.nor(); // normalizacja
+                direction.set(toPlayer); // kierunek = w stronę gracza
+            }
+        } else {
+            // ZACHOWANIE NORMALNE
+            if (movementTimer >= directionChangeTime || checkWallCollision(room)) {
+                direction.setToRandomDirection();
+                movementTimer = 0;
+            }
         }
 
         // Poruszanie się
@@ -76,6 +90,25 @@ public class Enemy {
     }
     public void setAlive(boolean alive){
         this.alive = alive;
+    }
+
+    public float getX() {
+        return bounds.x;
+    }
+
+    public float getY() {
+        return bounds.y;
+    }
+    public Vector2 getDirection() {
+        return direction;
+    }
+
+    public float getFovAngle() {
+        return fovAngle;
+    }
+
+    public float getViewDistance() {
+        return viewDistance;
     }
 
 }
