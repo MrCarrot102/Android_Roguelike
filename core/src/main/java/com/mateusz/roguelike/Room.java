@@ -51,7 +51,7 @@ public class Room {
 
         switch (type) {
             case PILLARS: generatePillars(screenWidth, screenHeight); break;
-            case MAZE: generateMaze(screenWidth, screenHeight); break;
+           // case MAZE: generateMaze(screenWidth, screenHeight); break;
             case TREASURE: generateTresures(screenWidth, screenHeight); break;
             case ENEMY_CAMP: generateEnemyCamp(screenWidth, screenHeight); break;
         }
